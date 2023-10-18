@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace=绑定一个对应的Dao/Mapper接口-->
+<mapper namespace="test.dao.StudentDAO">
+   
+    <!--当出现对象的属性 与 表的列不匹配时 必须进行 resultMap配置
+   
+        resultMap：设置自定义的映射关系
+        id：唯一标识
+        type：处理映射关系的实体类的类型
+        常用的标签：
+        id：处理主键和实体类中属性的映射关系
+        result：处理普通字段和实体类中属性的映射关系
+        association：处理多对一的映射关系（处理实体类类型的属性）
+        collection：处理一对多的映射关系（处理集合类型的属性）
+        column：设置映射关系中的字段名，必须是sql查询出的某个字段
+        property：设置映射关系中的属性的属性名，必须是处理的实体类类型中的属性名
+    -->
+   	<resultMap id="StudentMap" type="test.entity.Student">
+   		<id property="id" column="ID" javaType="java.lang.Long" jdbcType="BIGINT"></id>
+        <result property="name" column="NAME" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+		<result property="idCard" column="ID_CARD" javaType="java.lang.Long" jdbcType="BIGINT"></result>
+		<result property="sex" column="SEX" javaType="java.lang.Integer" jdbcType="BIGINT"></result>
+		<result property="sClass" column="S_CLASS" javaType="java.lang.Integer" jdbcType="BIGINT"></result>
+		<result property="sType" column="S_TYPE" javaType="java.lang.Integer" jdbcType="BIGINT"></result>
+        <result property="rollTime" column="ROLL_TIME" javaType="java.util.Date" jdbcType="DATE"></result>
+        <result property="mobile" column="MOBILE" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+		<result property="delete" column="IS_DELETE" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+		<result property="updateTime" column="UPDATE_TIME" javaType="java.util.Date" jdbcType="DATE"></result>
+        <!--
+        	多对一配置
+        	association  select :使用哪一个查询 以deptno为条件查询出一个Dept对象赋值给dept属性
+        	fetchType : 执行本身查询时是否会立即执行关联查询 多端建议使用 eager
+		        关联的嵌套 Select 查询
+		    问题：
+		        这种方式虽然很简单，但在大型数据集或大型数据表上表现不佳。这个问题被称为“N+1 查询问题”。 概括地讲，N+1 查询问题是这样子的：
+		            你执行了一个单独的 SQL 语句来获取结果的一个列表（就是“+1”）。
+		            对列表返回的每条记录，你执行一个 select 查询语句来为每条记录加载详细信息（就是“N”）。
+		    解决：
+		        MyBatis 能够对这样的查询进行延迟加载，因此可以将大量语句同时运行的开销分散开来。
+		        （例如： 我需要dept这个对象的时候就会进行加载，如果不需要就不会立即加载（延迟加载））
+		         然而，如果你加载记录列表之后立刻就遍历列表以获取嵌套的数据，就会触发所有的延迟加载查询，性能可能会变得很糟糕。
+  		    建议：采用将结果直接映射 到实体类中，执行一次联合查询 ，一般情况下比 效率比第一种 速度更高，但关联表过多和复杂时，需要进行测试
+  	  -->
+        <association property="school" column="SCHOOL_ID"  javaType="test.entity.School" jdbcType="BIGINT">
+        	<id property="id" column="s_id"/>
+            <result property="name" column="s_name"/>
+            <result property="description" column="s_description"/>
+        </association>
+		<association property="major" column="MAJOR_ID"  javaType="test.entity.Major" jdbcType="BIGINT">
+        	<id property="id" column="m_id"/>
+            <result property="name" column="m_name"/>
+            <result property="description" column="m_description"/>
+        </association>
+    </resultMap>
+   
+    <!--select查询语句-->
+    <!-- 获取全部 -->
+    <select id="getStudentList"  resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+        as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id
+        where st.is_delete = 0
+    </select>
+   	<!-- 根据学号查询 -->
+    <select id="getStudentById" parameterType="Long" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id 
+		where st.id=#{id} and st.is_delete = 0
+    </select>
+    <!-- 根据学生姓名查询,模糊匹配 -->
+    <select id="findStudentsByName" parameterType="String" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id  	
+		where st.name like "%"#{name}"%" and st.is_delete = 0
+    </select>
+    <!-- 根据专业查询,模糊匹配 -->
+    <select id="findStudentsByMajor" parameterType="String" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id  	
+		where m.name like "%"#{major}"%" and st.is_delete = 0
+    </select>
+    <select id="findStudentsBySchool" parameterType="String" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id  	
+		where s.name like "%"#{school}"%" and st.is_delete = 0
+    </select>
+    <select id="findStudentsByType" parameterType="Integer" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id  	
+		where s_type = #{type} and st.is_delete = 0
+    </select>
+    <!-- 根据学生姓名查询，精准匹配 -->
+    <select id="findStudentByName" parameterType="String" resultType="test.entity.Student" resultMap="StudentMap">
+        select st.*, s.id as s_id, s.name as s_name, s.description as s_description, m.id as m_id, m.name as m_name, m.description 
+		as m_description from student as st left join school as s on st.school_id = s.id left join major as m on st.major_id = m.id 	
+		where st.name = ""#{name}"" and st.is_delete = 0
+    </select>
+    <insert id="addStudent" parameterType="test.entity.Student" keyProperty="id" useGeneratedKeys="true">
+    	INSERT INTO student(ID,NAME,ID_CARD,SEX,S_CLASS,S_TYPE,ROLL_TIME,MOBILE,IS_DELETE,UPDATE_TIME,MAJOR_ID,SCHOOL_ID)
+    	VALUES(#{id},#{name},#{idCard},#{sex},#{sClass},#{sType},#{rollTime},#{mobile},#{delete},SYSDATE(),#{major.id},#{school.id})
+    </insert>
+    <delete id="delStudentById">
+    	UPDATE  student set IS_DELETE=1, UPDATE_TIME=SYSDATE()
+    	WHERE id=#{id} 
+    </delete>
+    <update id="updateStudent" parameterType="test.entity.Student">
+    	UPDATE  student set  NAME=#{name},ID_CARD=#{idCard},SEX=#{sex}, S_CLASS=#{sClass}, S_TYPE=#{sType},ROLL_TIME=#{rollTime},MOBILE=#{mobile}
+    	,MAJOR_ID=#{major.id},SCHOOL_ID=#{school.id}, UPDATE_TIME=SYSDATE() 
+    	WHERE id=#{id} 
+    </update>
+</mapper>

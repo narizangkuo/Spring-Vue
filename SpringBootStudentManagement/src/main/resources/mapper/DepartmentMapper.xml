@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace=绑定一个对应的Dao/Mapper接口-->
+<mapper namespace="test.dao.DepartmentDAO">
+   
+   	<resultMap id="departmentMap" type="test.entity.Department">
+        <id property="id" column="id" javaType="java.lang.Long" jdbcType="BIGINT"></id>
+        <result property="createTime" column="CREATE_TIME" javaType="java.util.Date" jdbcType="DATE"></result>
+        <result property="name" column="NAME" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="description" column="DESCRIPTION" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <association property="manager" column="MANAGER_ID"  javaType="test.entity.LoginUser" jdbcType="BIGINT">
+        	<id property="id" column="uid"/>
+            <result property="loginName" column="login_name"/>
+            <result property="name" column="uname"/>
+            <result property="mobile" column="mobile"/>
+        </association>
+        <!--  一对多  关联嵌套  结果映射    ofType 将数据封装到指定的泛型  -->
+        <collection property="userList" ofType="test.entity.LoginUser" >
+            <id property="id" column="uid"/>
+            <result property="loginName" column="login_name"/>
+            <result property="name" column="uname"/>
+            <result property="mobile" column="mobile"/>
+        </collection>
+ 
+    </resultMap>
+   
+   
+   
+    <!--select查询语句-->
+    
+    
+    <select id="getDepartment" resultType="test.entity.Department" resultMap="departmentMap">
+        select d.*,u.id as uid, u.name as uname,u.mobile,u.login_name from ibatis_department as d left join ibatis_login_user as u on d.MANAGER_ID=u.id where d.id=#{id}
+    </select>
+    <select id="getUsersByDepartmentID" resultMap="departmentMap">
+        select d.*,u.id as uid, u.name as uname,u.mobile,u.login_name from ibatis_department as d left JOIN ibatis_login_user as u on d.id=u.DEPARTMENT_ID where d.id=#{id}
+    </select>
+    
+    <!--  标签中加入了 useGeneratedKeys=“true” 是表示告诉 mybatis 新增后要返回主键的值,
+			keyProperty=“id” 是说 把回的主键值要返回来对实体类对象的哪一个属性 -->
+    <insert id="addDepartment" parameterType="test.entity.Department" keyProperty="id" useGeneratedKeys="true">
+    	INSERT INTO ibatis_department(CREATE_TIME,NAME,DESCRIPTION,MANAGER_ID)
+    	VALUES(#{createTime},#{name},#{description},#{manager.id})
+    </insert>
+    <update id="updateDepartment" parameterType="test.entity.Department">
+    	UPDATE  ibatis_department set NAME=#{name},DESCRIPTION=#{description},MANAGER_ID=#{manager.id}
+    	WHERE id=#{id}
+    </update>
+    <delete id="deleteDepartment" parameterType="Long">
+    	DELETE FROM ibatis_department where id=#{id}
+    </delete>
+    
+    
+</mapper>

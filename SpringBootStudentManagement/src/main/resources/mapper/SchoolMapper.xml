@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!--namespace=绑定一个对应的Dao/Mapper接口-->
+<mapper namespace="test.dao.SchoolDAO">
+   <resultMap id="schoolMap" type="test.entity.School">
+        <id property="id" column="id" javaType="java.lang.Long" jdbcType="BIGINT"></id>
+        <result property="name" column="NAME" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+        <result property="createTime" column="CREATE_TIME" javaType="java.util.Date" jdbcType="DATE"></result>
+        <result property="delete" column="IS_DELETE" javaType="java.lang.Integer" jdbcType="INTEGER"></result>
+    	<result property="description" column="DESCRIPTION" javaType="java.lang.String" jdbcType="VARCHAR"></result>
+    	<result property="updateTime" column="UPDATE_TIME" javaType="java.util.Date" jdbcType="DATE"></result>
+    </resultMap>
+    
+  	 <!--select查询语句-->
+    <select id="getSchoolList" resultType="test.dao.SchoolDAO" resultMap="schoolMap">
+    	select id, name, create_time, description, update_time from school where is_delete = 0 order by id desc;
+    </select>
+    <select id="getSchoolById" resultType="test.dao.SchoolDAO" resultMap="schoolMap">
+    	select id, name, create_time, description, update_time from school where id = #{id};
+    </select>
+    <select id="findSchoolsByName" parameterType="String" resultType="test.dao.SchoolDAO" resultMap="schoolMap">
+        select id, name, create_time, description, update_time from school where is_delete = 0 and name like "%"#{name}"%" order by id desc
+    </select>
+    <!--insert插入语句-->
+    <insert id="addSchool" parameterType="test.dao.SchoolDAO" keyProperty="id">
+    	INSERT INTO school(NAME,CREATE_TIME,DESCRIPTION, UPDATE_TIME)
+    	VALUES(#{name},#{createTime},#{description}, SYSDATE())
+    </insert>
+	<!--update更新语句-->
+	<update id="updateSchool" parameterType="test.dao.SchoolDAO">
+    	UPDATE  school set NAME=#{name},CREATE_TIME=#{createTime}, DESCRIPTION=#{description}, UPDATE_TIME=SYSDATE()
+    	WHERE id=#{id}
+    </update>
+    <!--delete删除语句,此处为假删除-->
+    <delete id="deleteSchoolById" parameterType="Long">
+    	UPDATE  school set IS_DELETE=1, UPDATE_TIME=SYSDATE()
+    	WHERE id=#{id}
+    </delete>
+</mapper>
